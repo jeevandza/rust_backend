@@ -12,7 +12,7 @@ pub struct CustomError {
 }
 
 impl CustomError {
-    pub fn new(error_status_code: u16, error_messag: String) -> CustomError {
+    pub fn new(error_status_code: u16, error_message: String) -> CustomError {
         CustomError {
             error_status_code,
             error_message,
@@ -22,7 +22,7 @@ impl CustomError {
 
 impl fmt::Display for CustomError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(&self.error_message.as_str())
+        f.write_str(self.error_message.as_str())
     }
 }
 
@@ -39,15 +39,17 @@ impl From<DieselError> for CustomError {
 }
 
 impl ResponseError for CustomError {
-    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+    fn error_response(&self) -> HttpResponse {
         let status_code = match StatusCode::from_u16(self.error_status_code) {
             Ok(status_code) => status_code,
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
+
         let error_message = match status_code.as_u16() < 500 {
             true => self.error_message.clone(),
             false => "Internal server error".to_string(),
         };
-        HttpResponse::build(status_code).json(json!({"message": error_message}))
+
+        HttpResponse::build(status_code).json(json!({ "message": error_message }))
     }
 }
